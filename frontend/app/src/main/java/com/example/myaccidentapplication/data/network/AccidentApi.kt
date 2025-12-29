@@ -2,6 +2,7 @@ package com.example.myaccidentapplication.data.network
 
 import com.example.myaccidentapplication.data.model.AccidentEvent
 import com.example.myaccidentapplication.data.model.AccidentResponse
+import com.example.myaccidentapplication.data.model.AlertRequest
 import com.example.myaccidentapplication.data.model.LoginRequest
 import com.example.myaccidentapplication.data.model.RegisterRequest
 import com.example.myaccidentapplication.data.model.RegisterResponse
@@ -23,5 +24,8 @@ interface AccidentApi {
 
     @POST("accidents/{userId}/history")
     suspend fun getAccidentHistory(@Path("userId") userId: String): Response<List<AccidentEvent>>
+
+    @POST("alert")
+    suspend fun sendEmergencyAlert(@Body request: AlertRequest): Response<AccidentResponse>
 }
 

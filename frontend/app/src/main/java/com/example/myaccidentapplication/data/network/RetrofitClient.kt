@@ -1,32 +1,50 @@
 package com.example.myaccidentapplication.data.network
 
-import com.example.myaccidentapplication.data.model.AccidentResponse
-import com.example.myaccidentapplication.data.model.RegisterRequest
-import com.example.myaccidentapplication.data.model.LoginRequest
-import com.example.myaccidentapplication.data.model.User
+import com.example.myaccidentapplication.data.model.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Query
 import retrofit2.Response
 
-// RetrofitClient for Auth
-object AuthRetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:8080/api/auth/"
+// Base URL for local server in emulator
+private const val BASE_URL = "http://10.0.2.2:8080/api/"
 
+private val retrofit: Retrofit = Retrofit.Builder()
+    .baseUrl(BASE_URL)
+    .addConverterFactory(GsonConverterFactory.create())
+    .build()
+
+// ---------- Auth Client ----------
+object AuthRetrofitClient {
     val api: AuthApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(AuthApi::class.java)
+        retrofit.create(AuthApi::class.java)
     }
 }
 
-interface AuthApi {
-    @POST("register")
-    suspend fun register(@Body request: RegisterRequest): Response<AccidentResponse>
+// ---------- Alert Client (Twilio SMS) ----------
+object AlertRetrofitClient {
+    val api: AlertApi by lazy {
+        retrofit.create(AlertApi::class.java)
+    }
+}
 
-    @POST("login")
-    suspend fun login(@Body request: LoginRequest): Response<AccidentResponse>
+// ---------- AUTH API ----------
+interface AuthApi {
+    @POST("auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<ApiResponse>
+
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): Response<ApiResponse>
+}
+
+// ---------- ALERT / TWILIO API ----------
+interface AlertApi {
+    @POST("alert/send")
+    suspend fun sendEmergencyAlert(
+        @Query("userId") userId: Int,
+        @Query("latitude") latitude: Double?,
+        @Query("longitude") longitude: Double?        // ❌ Fixed missing type
+    ): Response<ApiResponse>
 }

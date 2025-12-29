@@ -38,7 +38,7 @@ fun AccidentAlertScreen(
     var longitude by remember { mutableStateOf<Double?>(null) }
     var hasResponded by remember { mutableStateOf(false) }
 
-    // Vibrate on first composition
+    // ✅ Vibrate once when alert screen appears
     LaunchedEffect(Unit) {
         val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager =
@@ -62,10 +62,10 @@ fun AccidentAlertScreen(
         }
     }
 
-    // Get location safely
+    // ✅ Get location once
     LaunchedEffect(Unit) {
         val locationManager = LocationManager(context)
-        val location = locationManager.getLastLocationOrNull()   // ✅ FIXED
+        val location = locationManager.getLastLocationOrNull()
         if (location != null) {
             latitude = location.latitude
             longitude = location.longitude
@@ -76,14 +76,15 @@ fun AccidentAlertScreen(
         }
     }
 
-    // Countdown timer
+    // ✅ Countdown timer until auto-alert
     LaunchedEffect(Unit) {
         while (timeRemaining > 0 && !hasResponded) {
             delay(1000)
             timeRemaining--
         }
         if (!hasResponded && timeRemaining == 0) {
-            onTimeout(latitude, longitude)   // ✅ Pass GPS to timeout
+            hasResponded = true
+            onTimeout(latitude, longitude) // triggers backend alert on timeout
         }
     }
 
@@ -219,7 +220,7 @@ fun AccidentAlertScreen(
                 Button(
                     onClick = {
                         hasResponded = true
-                        onNeedHelp(latitude, longitude)   // ✅ Pass GPS to help
+                        onNeedHelp(latitude, longitude) // triggers backend alert when user presses "Need Help"
                     },
                     modifier = Modifier
                         .weight(1f)

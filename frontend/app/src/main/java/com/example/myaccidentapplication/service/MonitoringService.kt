@@ -1,23 +1,13 @@
 package com.example.myaccidentapplication.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.app.Service
+import android.app.*
 import android.content.Context
 import android.content.Intent
 import android.hardware.SensorManager
-import android.os.Build
-import android.os.IBinder
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import android.os.*
 import androidx.core.app.NotificationCompat
 import com.example.myaccidentapplication.ui.MainActivity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 class MonitoringService : Service() {
 
@@ -39,15 +29,16 @@ class MonitoringService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-        // Initialize vibrator
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vibrator = vibratorManager.defaultVibrator
+        // Vibrator init safe for all versions
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
         createNotificationChannel()
@@ -64,29 +55,24 @@ class MonitoringService : Service() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Accident Monitoring Service",
+                CHANNEL_ID, "Accident Monitoring Service",
                 NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Monitors for accidents using sensors"
-            }
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
         }
     }
 
     private fun createNotification(): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE
+            this, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Accident Monitoring Active")
-            .setContentText("Monitoring for accidents...")
+            .setContentText("Monitoring sensors...")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
@@ -95,10 +81,9 @@ class MonitoringService : Service() {
 
     private fun startMonitoring() {
         sensorManager?.let { sm ->
-            accidentSensorManager = AccidentSensorManager(sm) { accelX, accelY, accelZ, gyroX, gyroY, gyroZ ->
-                // ✅ Run detection callback off the main thread
+            accidentSensorManager = AccidentSensorManager(sm) { ax, ay, az, gx, gy, gz ->
                 CoroutineScope(Dispatchers.IO).launch {
-                    onAccidentDetected(accelX, accelY, accelZ, gyroX, gyroY, gyroZ)
+                    onAccidentDetected(ax, ay, az, gx, gy, gz)
                 }
             }
             accidentSensorManager?.startMonitoring()
@@ -106,40 +91,29 @@ class MonitoringService : Service() {
     }
 
     private fun onAccidentDetected(
-        accelX: Float,
-        accelY: Float,
-        accelZ: Float,
-        gyroX: Float,
-        gyroY: Float,
-        gyroZ: Float
+        ax: Float, ay: Float, az: Float,
+        gx: Float, gy: Float, gz: Float
     ) {
-        // Vibrate immediately (safe to run in IO)
-        vibrate()
+        vibratePhone()
 
-        // Broadcast accident detection
         val intent = Intent(ACTION_ACCIDENT_DETECTED).apply {
-            putExtra(EXTRA_ACCEL_X, accelX)
-            putExtra(EXTRA_ACCEL_Y, accelY)
-            putExtra(EXTRA_ACCEL_Z, accelZ)
-            putExtra(EXTRA_GYRO_X, gyroX)
-            putExtra(EXTRA_GYRO_Y, gyroY)
-            putExtra(EXTRA_GYRO_Z, gyroZ)
+            putExtra(EXTRA_ACCEL_X, ax)
+            putExtra(EXTRA_ACCEL_Y, ay)
+            putExtra(EXTRA_ACCEL_Z, az)
+            putExtra(EXTRA_GYRO_X, gx)
+            putExtra(EXTRA_GYRO_Y, gy)
+            putExtra(EXTRA_GYRO_Z, gz)
         }
         sendBroadcast(intent)
     }
 
-    private fun vibrate() {
-        vibrator?.let { v ->
+    private fun vibratePhone() {
+        vibrator?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                v.vibrate(
-                    VibrationEffect.createOneShot(
-                        1000,
-                        VibrationEffect.DEFAULT_AMPLITUDE
-                    )
-                )
+                it.vibrate(VibrationEffect.createOneShot(800, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 @Suppress("DEPRECATION")
-                v.vibrate(1000)
+                it.vibrate(800)
             }
         }
     }

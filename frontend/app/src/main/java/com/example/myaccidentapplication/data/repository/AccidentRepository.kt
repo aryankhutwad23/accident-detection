@@ -3,6 +3,7 @@ package com.example.myaccidentapplication.data.repository
 import com.example.myaccidentapplication.data.local.UserPreferences
 import com.example.myaccidentapplication.data.model.*
 import com.example.myaccidentapplication.data.network.AccidentApi
+import com.example.myaccidentapplication.data.model.AccidentResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -34,7 +35,7 @@ class AccidentRepository(
     // ---------------- REGISTER ----------------
     suspend fun register(name: String, email: String, password: String): Result<RegisterResponse> {
         return try {
-            val request = RegisterRequest(name,email, password)
+            val request = RegisterRequest(name, email, password)
             val response = api.register(request)
 
             if (response.isSuccessful && response.body() != null) {
@@ -104,6 +105,20 @@ class AccidentRepository(
             userPreferences.emergencyContact2
         ) { c1, c2 ->
             EmergencyContacts(contact1 = c1, contact2 = c2)
+        }
+    }
+
+    suspend fun sendEmergencyAlert(userId: Int, lat: Double?, lon: Double?): Result<String> {
+        return try {
+            val response = api.sendEmergencyAlert(AlertRequest(userId, lat, lon))
+            if (response.isSuccessful && response.body() != null) {
+                // ✅ use response.body()!!.message safely
+                Result.success(response.body()!!.message)
+            } else {
+                Result.failure(Exception("Failed to send alert"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

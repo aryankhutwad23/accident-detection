@@ -129,16 +129,17 @@ fun RegisterScreen(
                         onClick = {
                             scope.launch {
                                 isLoading = true
-                                // Debug log to confirm values
                                 Log.d("RegisterScreen", "Name=$name, Email=$email, Password=$password")
 
                                 val result = repository.register(name, email, password)
                                 isLoading = false
                                 result.onSuccess {
-                                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                                    val msg = it.message ?: "Registration successful"
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                     onRegisterSuccess()
                                 }.onFailure {
                                     errorMessage = it.message ?: "Registration failed"
+                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
