@@ -4,6 +4,7 @@ import com.example.myaccidentapplication.data.model.AccidentEvent
 import com.example.myaccidentapplication.data.model.AccidentResponse
 import com.example.myaccidentapplication.data.model.LoginRequest
 import com.example.myaccidentapplication.data.model.RegisterRequest
+import com.example.myaccidentapplication.data.model.RegisterResponse
 import com.example.myaccidentapplication.data.model.User
 import retrofit2.Response
 import retrofit2.http.Body
@@ -15,7 +16,7 @@ interface AccidentApi {
     suspend fun login(@Body request: LoginRequest): Response<User>
 
     @POST("register")
-    suspend fun register(@Body request: RegisterRequest): Response<User>
+    suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
 
     @POST("accidents/report")
     suspend fun reportAccident(@Body accident: AccidentEvent): Response<AccidentResponse>

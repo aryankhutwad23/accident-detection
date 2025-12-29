@@ -1,5 +1,6 @@
 package com.example.myaccidentapplication.ui.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,17 +21,16 @@ import com.example.myaccidentapplication.data.repository.AccidentRepository
 import com.example.myaccidentapplication.ui.theme.Amber
 import com.example.myaccidentapplication.ui.theme.DeepBlue
 import com.example.myaccidentapplication.ui.theme.Teal
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,          // ✅ renamed
+    onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    repository: AccidentRepository          // ✅ added repository
+    repository: AccidentRepository
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -127,19 +127,18 @@ fun RegisterScreen(
 
                     Button(
                         onClick = {
-                            isLoading = true
-                            CoroutineScope(Dispatchers.IO).launch {
+                            scope.launch {
+                                isLoading = true
+                                // Debug log to confirm values
+                                Log.d("RegisterScreen", "Name=$name, Email=$email, Password=$password")
+
                                 val result = repository.register(name, email, password)
                                 isLoading = false
                                 result.onSuccess {
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        Toast.makeText(context, "Registration Successful", Toast.LENGTH_SHORT).show()
-                                        onRegisterSuccess()   // ✅ navigate after success
-                                    }
+                                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                                    onRegisterSuccess()
                                 }.onFailure {
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        errorMessage = it.message ?: "Registration failed"
-                                    }
+                                    errorMessage = it.message ?: "Registration failed"
                                 }
                             }
                         },

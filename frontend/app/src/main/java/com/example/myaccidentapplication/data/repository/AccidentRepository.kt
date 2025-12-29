@@ -20,7 +20,8 @@ class AccidentRepository(
 
             if (response.isSuccessful && response.body() != null) {
                 val user = response.body()!!
-                userPreferences.saveUser(user.id, user.name, user.email)
+                // user.id is Int, saveUser expects Int
+                userPreferences.saveUser(user.id, user.name, user.email, null)
                 Result.success(user)
             } else {
                 Result.failure(Exception("Login failed: ${response.message()}"))
@@ -31,17 +32,25 @@ class AccidentRepository(
     }
 
     // ---------------- REGISTER ----------------
-    suspend fun register(name: String, email: String, password: String): Result<User> {
+    suspend fun register(name: String, email: String, password: String): Result<RegisterResponse> {
         return try {
-            val request = RegisterRequest(name, email, password)
+            val request = RegisterRequest(name,email, password)
             val response = api.register(request)
 
             if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
-                userPreferences.saveUser(user.id, user.name, user.email)
-                Result.success(user)
+                val registerResponse = response.body()!!
+
+                // Save user info locally (Int userId + token)
+                userPreferences.saveUser(
+                    registerResponse.userId,
+                    name,
+                    email,
+                    registerResponse.token
+                )
+
+                Result.success(registerResponse)
             } else {
-                Result.failure(Exception("Registration failed: ${response.message()}"))
+                Result.failure(Exception(response.errorBody()?.string() ?: "Registration failed"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -51,7 +60,7 @@ class AccidentRepository(
     // ---------------- ACCIDENT REPORT ----------------
     suspend fun reportAccident(accident: AccidentEvent): Result<AccidentResponse> {
         return try {
-            val userId = userPreferences.userId.first()
+            val userId = userPreferences.userId.first() // Flow<Int>
             val accidentWithUserId = accident.copy(userId = userId)
             val response = api.reportAccident(accidentWithUserId)
 
@@ -84,7 +93,7 @@ class AccidentRepository(
     fun isLoggedIn(): Flow<Boolean> = userPreferences.isLoggedIn
 
     // ---------------- EMERGENCY CONTACTS ----------------
-    suspend fun saveEmergencyContacts(userId: String, contact1: String, contact2: String) {
+    suspend fun saveEmergencyContacts(userId: Int, contact1: String, contact2: String) {
         // Optionally call API here if backend supports saving contacts
         userPreferences.saveEmergencyContacts(contact1, contact2)
     }

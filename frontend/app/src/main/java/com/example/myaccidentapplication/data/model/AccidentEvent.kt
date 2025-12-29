@@ -4,7 +4,7 @@ import java.util.Date
 
 data class AccidentEvent(
     val id: String = "",
-    val userId: String,
+    val userId: Int,
     val timestamp: Long = System.currentTimeMillis(),
     val latitude: Double? = null,
     val longitude: Double? = null,

@@ -1,0 +1,21 @@
+# Backend (Maven)
+target/
+*.log
+*.env
+src/main/resources/application.properties
+.idea/
+
+# Frontend (Android)
+local.properties
+app/google-services.json
+*.jks
+*.keystore
+build/
+.gradle/
+.idea/
+
+# General
+*.key
+*.pem
+*.crt
+.DS_Store

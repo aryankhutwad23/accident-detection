@@ -62,7 +62,7 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                repository = repository   // ✅ pass repository here
+                repository = repository
             )
         }
 
@@ -71,7 +71,7 @@ fun AppNavigation(
             EmergencyContactFormScreen(
                 onSaveContacts = { c1, c2 ->
                     CoroutineScope(Dispatchers.Main).launch {
-                        repository.saveEmergencyContacts(currentUser?.id ?: "", c1, c2)
+                        repository.saveEmergencyContacts(currentUser?.id ?: -1, c1, c2) // FIXED: Int fallback
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.EmergencyContacts.route) { inclusive = true }
                         }
@@ -133,7 +133,7 @@ fun AppNavigation(
                             TwilioClient.sendAlertMessage(contacts.contact2, message)
                         }
                         val accidentEvent = AccidentEvent(
-                            userId = currentUser?.id ?: "",
+                            userId = currentUser?.id ?: -1, // FIXED: Int fallback
                             latitude = lat,
                             longitude = lon,
                             severity = 1.0f
@@ -158,7 +158,7 @@ fun AppNavigation(
                             TwilioClient.sendAlertMessage(contacts.contact2, message)
                         }
                         val accidentEvent = AccidentEvent(
-                            userId = currentUser?.id ?: "",
+                            userId = currentUser?.id ?: -1, // FIXED: Int fallback
                             latitude = lat,
                             longitude = lon,
                             severity = 1.0f
