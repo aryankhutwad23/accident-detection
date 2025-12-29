@@ -1,4 +1,4 @@
-# Accident detection app
+# Accident detection app 🚨
 
 ## Our solution: AI that reacts instantly
 In India, someone dies in a road accident every 3–4 minutes. That’s 485 deaths every single day. Most are preventable if emergency services arrive just 7–10 minutes faster. Our app closes that gap by automating the alert before a victim can even reach a phone.
